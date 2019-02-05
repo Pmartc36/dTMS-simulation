@@ -1,83 +1,52 @@
-% Initialize
-clear all
+function [B] = calc_B_field(S,F,I)
+%---------------------------------------------------
+%  NAME:      BSmag_get_B.m
+%  WHAT:      Calculates B at field points
+%  INPUTS:
+%    S          = Coil points gpuArray(Matrix)  [N x 3]
+%    F          = Field points gpuArray(Matrix) [M x 3]
+%    I          = Current through the coil
+%
+%  OUTPUTS:
+%    B          = Magnetic field strength [T] (same dimensions as F)
+%----------------------------------------------------
 
-[x1,y1,z1] = spiral_gen(60,250,0,500-1,0,50,100,"x");
-[x2,y2,z2] = spiral_gen(60,250,0,500-1,0,75,100,"x");
+%mu0 = 4*pi*1e-7; % vacuum permeability [N/A^2]
+M = size(F,1);   % number of points in the field
+N = size(S,1);   % number of points in the coil
+disp('Number of field points:');
+disp(M);
 
-[x3,y3,z3] = spiral_gen(-170,250,0,500-1,0,50,100,"x");
-[x4,y4,z4] = spiral_gen(-170,250,0,500-1,0,75,100,"x");
+disp('Number of Source Points:');
+disp(N);
+%D = gpuArray(zeros(N,3));  % stores dB for each point in S for one point in F [N x 3]
+%B = gpuArray(zeros(M,3));  % the magnetic field matrix [M x 3]
 
-[x5,y5,z5] = spiral_gen(375,-30,0,500-1,0,50,100,"y");
-[x6,y6,z6] = spiral_gen(375,-30,0,500-1,0,75,100,"y");
-
-phi = 35*pi/180;
-xRot = [[1,0,0],[0,cos(phi),sin(phi)],[0,-1*sin(phi),cos(phi)]];
-xRot = reshape(xRot,3,3);
-for i = 1: 500
-    v = [x5(i),y5(i),z5(i)];
-    w = [x6(i),y6(i),z6(i)];
-    nv = v * xRot;
-    nw = w * xRot;
-    x5(i) = nv(1);
-    y5(i) = nv(2)+50;
-    z5(i) = nv(3)+150;
-    x6(i) = nw(1);
-    y6(i) = nw(2)+50;
-    z6(i) = nw(3)+150;
-end
-
-Dx = [x2,x4,x6];
-Dx = reshape(Dx,1500,1);
-Dy = [y2,y4,y6];
-Dy = reshape(Dy,1500,1);
-Dz = [z2,z4,z6];
-Dz = reshape(Dz,1500,1);
-
-Cx = [x1,x3,x5];
-Cx = reshape(Cx,1500,1);
-Cy = [y1,y3,y5];
-Cy = reshape(Cy,1500,1);
-Cz = [z1,z3,z5];
-Cz = reshape(Cz,1500,1);
-
-S1 = [Cx;Cy;Cz];
-S1 = reshape(S1,1500,3);
-S2 = [Dx;Dy;Dz];
-S2 = reshape(S2,1500,3);
-
-a = linspace(-200,150,50);
-b = linspace(-75,125,50);
-[X,Z] = meshgrid(a,b);
-Y = 265.*ones(50,50);
-F = [X(:),Y(:),Z(:)];
-
-
-i1 = 1000;
-i2 = -700;
-
-% 
-% % Biot-Savart Integration
-B1 = calc_B_field(S1,F,i1);
-B2 = calc_B_field(S2,F,i2);
-B = B1;
-B_u = B;
-B_m = zeros(size(B,1),1);
-for n= 1:size(B,1)
-    B_u(n,:) = B_u(n,:)/norm( B_u(n,:));
-    B_m(n) = norm(B(n,:));
-end
-% 
-figure(1);
-hold on
-q = quiver3(F(:,1),F(:,2),F(:,3),B_u(:,1),B_u(:,2),B_u(:,3));
-hold off
-
-
-figure(2);
-hold on
-markerSize = 10;
-scatter3(F(:,1),F(:,2),F(:,3),markerSize,B_m,'filled');
-colorbar
-plot3(S1(:,1),S1(:,2),S1(:,3),'.black');
-plot3(S2(:,1),S2(:,2),S2(:,3),'.blue');
-hold off
+D = zeros(N,3); % stores dB for each current source
+B = zeros(M,3);
+%debug = zeros(3,3);
+%debug2 = zeros(3,3);
+for P = 1:M
+    for n = 1:N-1
+        %debug2(1,:) = S(n,:);
+        %debug2(2,:) = S(n,:);
+        %debug2(3,:) = S(n,:);
+        r = F(P,:)-S(n,:); %vector pointing from source to field point
+        r_hat = r/( 2000 * norm(r));
+        %debug(1,:) = dr;
+        r_sqr = (norm(r))^2/2000;  
+        %aproximation of infitesimal vector on the path
+        dl = (S(n+1,:)-S(n,:))/2000;
+        %debug(2,:) = dl;
+        b_vec = cross(dl,r_hat,2)/r_sqr; %dl x dr/r^2
+        %disp(b_vec);
+        %debug(3,:) = b_vec;
+        D(n,:) = b_vec;
+        %quiver3(debug2(:,1),debug2(:,2),debug2(:,3),debug(:,1),debug(:,2),debug(:,3));
+    end
+    %disp(100*P/M);
+    B(P,:) = -1*I*sum(D,1)/1e7; %Aproxamation of the integral 
+end 
+    
+    
+         
