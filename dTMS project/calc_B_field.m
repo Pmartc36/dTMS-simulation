@@ -31,7 +31,7 @@ for P = 1:M
         %debug2(1,:) = S(n,:);
         %debug2(2,:) = S(n,:);
         %debug2(3,:) = S(n,:);
-        r = F(P,:)-S(n,:); %vector pointing from source to field point
+        r = (F(P,:)-S(n,:))/2000; %vector pointing from source to field point
         r_hat = r/(norm(r));
         %debug(1,:) = dr;
         r_sqr = (norm(r))^2;  
@@ -44,7 +44,7 @@ for P = 1:M
         %quiver3(debug2(:,1),debug2(:,2),debug2(:,3),debug(:,1),debug(:,2),debug(:,3));
     end
     %disp(100*P/M);
-    B(P,:) = -1*I*sum(D,1)/1e-7; %Aproxamation of the integral 
+    B(P,:) = -1*I*sum(D,1)/1e7; %Aproxamation of the integral 
 end 
     
     

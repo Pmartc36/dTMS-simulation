@@ -57,23 +57,23 @@ F = [X(:),Y(:),Z(:)];
 
 i1 = 100;
 i2 = -99;
-i3 = 5;
-i4 = -4;
+i3 = 50;
+i4 = -49;
 
 % 
 % % Biot-Savart Integration
 B1 = calc_B_field(S1,F,i1);
 B2 = calc_B_field(S2,F,i2);
-%B3 = calc_B_field(S1,F,i3);
-%B4 = calc_B_field(S2,F,i4);
+B3 = calc_B_field(S1,F,i3);
+B4 = calc_B_field(S2,F,i4);
 B = B1+B2;
-%BL = B3+B4;
+BL = B3+B4;
 B_u = B;
 B_l = zeros(size(B,1),1);
 B_m = zeros(size(B,1),1);
 for n= 1:size(B,1)
     B_u(n,:) = B_u(n,:)/norm( B_u(n,:));
-    %B_l(n) = norm(BL);
+    B_l(n) = norm(B_l);
     B_m(n) = norm(B(n,:));
 end
 
@@ -105,13 +105,27 @@ hold off
 figure(2);
 hold on
 markerSize = 100;
-scatter3(F(:,1),F(:,2),F(:,3),markerSize,B_m/-.01,'filled');
+scatter3(F(:,1),F(:,2),F(:,3),markerSize,B_l,'filled');
 plot3(na(:,1),na(:,2),na(:,3),'.');
 plot3(am(:,1),am(:,2),am(:,3),'.');
 plot3(ht(:,1),ht(:,2),ht(:,3),'.');
 %plot3(sk(:,1),sk(:,2),sk(:,3),'.');
 colorbar
-caxis([-1000 0])
+caxis([0 10])
+%plot3(S1(:,1),S1(:,2),S1(:,3),'.black');
+%plot3(S2(:,1),S2(:,2),S2(:,3),'.blue');
+hold off
+
+figure(3);
+hold on
+markerSize = 100;
+scatter3(F(:,1),F(:,2),F(:,3),markerSize,(B_m-B_l)/-.001,'filled');
+plot3(na(:,1),na(:,2),na(:,3),'.');
+plot3(am(:,1),am(:,2),am(:,3),'.');
+plot3(ht(:,1),ht(:,2),ht(:,3),'.');
+%plot3(sk(:,1),sk(:,2),sk(:,3),'.');
+colorbar
+caxis([0 10])
 %plot3(S1(:,1),S1(:,2),S1(:,3),'.black');
 %plot3(S2(:,1),S2(:,2),S2(:,3),'.blue');
 hold off
